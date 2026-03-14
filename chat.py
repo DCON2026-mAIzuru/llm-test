@@ -4,7 +4,7 @@ import argparse
 
 from ollama import Client
 
-from memory import MemoryEngine, MemoryRecord, MemoryStore
+from memory import MemoryEngine, MemoryRecord, MemoryStore, extract_forget_target
 
 
 def system_prompt(long_form: bool) -> str:
@@ -85,6 +85,29 @@ def run_chat(
             continue
 
         user_turn_id = store.add_turn(user_id=user_id, role="user", content=user_text)
+        forget_target = extract_forget_target(user_text)
+        if forget_target is not None:
+            if forget_target == "":
+                assistant_text = "忘れる対象を教えてください。例: 「Pythonのこと忘れて」"
+            elif forget_target == "__all__":
+                archived = store.archive_all_memories(user_id=user_id)
+                assistant_text = f"了解です。保存していた記憶を {archived} 件忘れました。"
+            else:
+                target_emb = engine.embed_text(forget_target)
+                archived = store.archive_memories_by_query(
+                    user_id=user_id,
+                    query=forget_target,
+                    query_embedding=target_emb,
+                )
+                if archived == 0:
+                    assistant_text = f"「{forget_target}」に関連する記憶は見つかりませんでした。"
+                else:
+                    assistant_text = f"了解です。「{forget_target}」に関連する記憶を {archived} 件忘れました。"
+
+            print(f"Assistant> {assistant_text}")
+            store.add_turn(user_id=user_id, role="assistant", content=assistant_text)
+            continue
+
         emotion, arousal, _ = engine.detect_emotion(user_text, use_llm=not fast_mode)
         query_emb = engine.embed_text(user_text)
         recalled = store.recall(

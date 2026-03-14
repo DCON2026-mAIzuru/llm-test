@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from ollama import Client
 from pydantic import BaseModel, Field
 
-from memory import MemoryEngine, MemoryRecord, MemoryStore
+from memory import MemoryEngine, MemoryRecord, MemoryStore, extract_forget_target
 
 
 def system_prompt(long_form: bool) -> str:
@@ -88,6 +88,28 @@ class ChatRuntime:
     def process_message(self, user_id: str, user_text: str) -> str:
         with self.lock:
             user_turn_id = self.store.add_turn(user_id=user_id, role="user", content=user_text)
+            forget_target = extract_forget_target(user_text)
+            if forget_target is not None:
+                if forget_target == "":
+                    assistant_text = "忘れる対象を教えてください。例: 「Pythonのこと忘れて」"
+                elif forget_target == "__all__":
+                    archived = self.store.archive_all_memories(user_id=user_id)
+                    assistant_text = f"了解です。保存していた記憶を {archived} 件忘れました。"
+                else:
+                    target_emb = self.engine.embed_text(forget_target)
+                    archived = self.store.archive_memories_by_query(
+                        user_id=user_id,
+                        query=forget_target,
+                        query_embedding=target_emb,
+                    )
+                    if archived == 0:
+                        assistant_text = f"「{forget_target}」に関連する記憶は見つかりませんでした。"
+                    else:
+                        assistant_text = f"了解です。「{forget_target}」に関連する記憶を {archived} 件忘れました。"
+
+                self.store.add_turn(user_id=user_id, role="assistant", content=assistant_text)
+                return assistant_text
+
             emotion, arousal, _ = self.engine.detect_emotion(user_text, use_llm=not self.fast_mode)
             query_emb = self.engine.embed_text(user_text)
             recalled = self.store.recall(

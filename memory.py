@@ -54,6 +54,29 @@ def keyword_similarity(a: str, b: str) -> float:
     return inter / denom if denom else 0.0
 
 
+def extract_forget_target(text: str) -> str | None:
+    normalized = text.strip()
+    if not normalized:
+        return None
+
+    triggers = ("忘れて", "忘れたい", "消して", "削除して", "消してください", "削除してください")
+    if not any(t in normalized for t in triggers):
+        return None
+
+    if any(w in normalized for w in ("全部", "すべて", "全て")):
+        return "__all__"
+
+    for t in triggers:
+        idx = normalized.find(t)
+        if idx == -1:
+            continue
+        candidate = normalized[:idx].strip()
+        candidate = candidate.strip("。．、, ")
+        candidate = re.sub(r"(のこと|について|を|の)$", "", candidate).strip()
+        return candidate
+    return ""
+
+
 @dataclass
 class MemoryRecord:
     memory_type: str
@@ -187,6 +210,68 @@ class MemoryStore:
             }
             for r in cur.fetchall()
         ]
+
+    def archive_all_memories(self, user_id: str) -> int:
+        cur = self.conn.cursor()
+        cur.execute(
+            "SELECT COUNT(*) AS cnt FROM memories WHERE user_id = ? AND archived = 0",
+            (user_id,),
+        )
+        count = int(cur.fetchone()["cnt"])
+        cur.execute(
+            "UPDATE memories SET archived = 1, updated_at = ? WHERE user_id = ? AND archived = 0",
+            (now_ts(), user_id),
+        )
+        self.conn.commit()
+        return count
+
+    def archive_memories_by_query(
+        self,
+        user_id: str,
+        query: str,
+        query_embedding: list[float] | None,
+        limit: int = 8,
+        threshold: float = 0.2,
+    ) -> int:
+        q = query.strip().lower()
+        if not q:
+            return 0
+
+        cur = self.conn.cursor()
+        cur.execute(
+            """
+            SELECT id, content, embedding_json
+            FROM memories
+            WHERE user_id = ? AND archived = 0
+            """,
+            (user_id,),
+        )
+
+        scored: list[tuple[float, int]] = []
+        for row in cur.fetchall():
+            content = str(row["content"])
+            content_l = content.lower()
+            ksim = keyword_similarity(q, content_l)
+            contain_boost = 0.35 if q in content_l else 0.0
+            sim = min(1.0, ksim + contain_boost)
+            if query_embedding and row["embedding_json"]:
+                emb = json.loads(row["embedding_json"])
+                sim = max(sim, cosine_similarity(query_embedding, emb))
+            if sim >= threshold:
+                scored.append((sim, int(row["id"])))
+
+        scored.sort(key=lambda x: x[0], reverse=True)
+        target_ids = [mem_id for _, mem_id in scored[:limit]]
+        if not target_ids:
+            return 0
+
+        placeholders = ",".join("?" for _ in target_ids)
+        cur.execute(
+            f"UPDATE memories SET archived = 1, updated_at = ? WHERE id IN ({placeholders})",
+            (now_ts(), *target_ids),
+        )
+        self.conn.commit()
+        return len(target_ids)
 
     def _find_duplicate(
         self,

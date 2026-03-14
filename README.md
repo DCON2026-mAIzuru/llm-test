@@ -76,6 +76,7 @@ python webapp.py --model gemma3:4b --embedding-model nomic-embed-text --port 800
 - 左サイドバーで `User ID` を切り替えるとユーザーごとに会話・記憶を分離
 - `記憶を表示` で保存済みメモリを確認
 - 見た目はChatGPT風のメッセージバブル + 下部コンポーザー
+- チャットで `「〜を忘れて」` と送ると関連記憶をアーカイブ（想起対象から除外）
 
 オプション:
 
@@ -92,6 +93,12 @@ python webapp.py --model gemma3:4b --embedding-model nomic-embed-text --port 800
 
 - `/memory`: 現在想起される記憶を表示
 - `/exit`: 終了
+
+忘却リクエストの例:
+
+- `Pythonのこと忘れて`
+- `昨日の話を忘れて`
+- `全部忘れて`
 
 ## Notes
 
