@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Long Memory Chat</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <h1>Long Memory Chat</h1>
+        <p class="muted">Qwen 4B + Emotional Memory</p>
+        <label for="userId">User ID</label>
+        <input id="userId" value="default-user" />
+        <button id="reloadBtn" class="ghost">履歴を再読み込み</button>
+        <button id="memoryBtn" class="ghost">記憶を表示</button>
+      </aside>
+
+      <main class="chat-shell">
+        <div id="chat" class="chat"></div>
+
+        <form id="composer" class="composer">
+          <textarea
+            id="message"
+            placeholder="メッセージを入力してください"
+            rows="1"
+          ></textarea>
+          <button id="sendBtn" type="submit">送信</button>
+        </form>
+      </main>
+    </div>
+
+    <dialog id="memoryDialog">
+      <h3>Memories</h3>
+      <pre id="memoryContent"></pre>
+      <button id="closeMemoryBtn">閉じる</button>
+    </dialog>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>

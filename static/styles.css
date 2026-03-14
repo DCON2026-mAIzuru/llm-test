@@ -1,0 +1,165 @@
+:root {
+  --bg: #0f1419;
+  --panel: #17212b;
+  --panel-2: #1f2a36;
+  --text: #e8eef5;
+  --muted: #9aa8b7;
+  --accent: #3ea6ff;
+  --user: #27415d;
+  --assistant: #1f2d22;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  background: radial-gradient(circle at top right, #1f2d3a, var(--bg) 45%);
+  color: var(--text);
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  height: 100vh;
+}
+
+.sidebar {
+  border-right: 1px solid #263442;
+  padding: 18px;
+  background: rgba(13, 20, 29, 0.86);
+}
+
+.sidebar h1 {
+  margin: 0 0 6px;
+  font-size: 20px;
+}
+
+.muted {
+  color: var(--muted);
+  margin: 0 0 18px;
+}
+
+.sidebar label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: var(--muted);
+}
+
+.sidebar input,
+.ghost {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #2e3f50;
+  background: var(--panel);
+  color: var(--text);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.ghost {
+  cursor: pointer;
+}
+
+.chat-shell {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-width: 0;
+}
+
+.chat {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.message {
+  max-width: 860px;
+  margin: 0 auto 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.message.user {
+  background: var(--user);
+}
+
+.message.assistant {
+  background: var(--assistant);
+}
+
+.message.system {
+  background: #3a2f21;
+}
+
+.composer {
+  border-top: 1px solid #263442;
+  background: rgba(13, 20, 29, 0.9);
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+#message {
+  resize: none;
+  border-radius: 12px;
+  border: 1px solid #2e3f50;
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 15px;
+  padding: 12px 14px;
+  min-height: 48px;
+  max-height: 200px;
+}
+
+#sendBtn {
+  border: none;
+  border-radius: 10px;
+  padding: 0 18px;
+  background: var(--accent);
+  color: #07213a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#sendBtn[disabled] {
+  opacity: 0.55;
+  cursor: default;
+}
+
+dialog {
+  width: min(880px, calc(100% - 24px));
+  border-radius: 14px;
+  border: 1px solid #2e3f50;
+  background: #101820;
+  color: var(--text);
+  padding: 18px;
+}
+
+dialog pre {
+  white-space: pre-wrap;
+  background: #182430;
+  padding: 12px;
+  border-radius: 10px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+@media (max-width: 860px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    border-right: none;
+    border-bottom: 1px solid #263442;
+  }
+}
